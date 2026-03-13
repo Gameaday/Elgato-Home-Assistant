@@ -1,18 +1,19 @@
 {
+	"$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
 	"Author": "Gameaday",
 	"Category": "Home Assistant",
 	"CategoryIcon": "imgs/plugin/category",
 	"CodePath": "bin/plugin.js",
-	"Description": "Control and monitor your Home Assistant smart home directly from your Stream Deck. Toggle entities, call services, activate scenes, and display live entity states.",
+	"Description": "Control and monitor your Home Assistant smart home directly from your Stream Deck. Toggle entities, call services, activate scenes, and display live entity states in real time.",
 	"Icon": "imgs/plugin/icon",
 	"Name": "Home Assistant",
 	"Nodejs": {
 		"Version": "20",
 		"Debug": "enabled"
 	},
-	"SDKVersion": 2,
+	"SDKVersion": 3,
 	"Software": {
-		"MinimumVersion": "6.4"
+		"MinimumVersion": "6.9"
 	},
 	"OS": [
 		{
@@ -24,15 +25,18 @@
 			"MinimumVersion": "10"
 		}
 	],
+	"URL": "https://github.com/Gameaday/Elgato-Home-Assistant",
+	"SupportURL": "https://github.com/Gameaday/Elgato-Home-Assistant/issues",
 	"UUID": "com.gameaday.homeassistant",
-	"Version": "1.0.0",
+	"Version": "2.0.0",
 	"Actions": [
 		{
 			"Icon": "imgs/actions/toggle/icon",
 			"Name": "Toggle Entity",
 			"UUID": "com.gameaday.homeassistant.toggle",
-			"Tooltip": "Toggle any Home Assistant entity (light, switch, input_boolean, etc.) on or off.",
+			"Tooltip": "Toggle any Home Assistant entity (light, switch, input_boolean, etc.) on or off. Button reflects live state in real time.",
 			"Controllers": ["Keypad"],
+			"DisableAutomaticStates": true,
 			"States": [
 				{
 					"Image": "imgs/actions/toggle/off",
@@ -45,13 +49,13 @@
 			],
 			"PropertyInspectorPath": "ui/toggle.html",
 			"SupportedInMultiActions": true,
-			"DisableCaching": false
+			"UserTitleEnabled": true
 		},
 		{
 			"Icon": "imgs/actions/call-service/icon",
 			"Name": "Call Service",
 			"UUID": "com.gameaday.homeassistant.call-service",
-			"Tooltip": "Call any Home Assistant service with optional service data payload.",
+			"Tooltip": "Call any Home Assistant service with optional JSON service data payload.",
 			"Controllers": ["Keypad"],
 			"States": [
 				{
@@ -61,13 +65,13 @@
 			],
 			"PropertyInspectorPath": "ui/call-service.html",
 			"SupportedInMultiActions": true,
-			"DisableCaching": false
+			"UserTitleEnabled": true
 		},
 		{
 			"Icon": "imgs/actions/monitor/icon",
 			"Name": "Monitor State",
 			"UUID": "com.gameaday.homeassistant.monitor",
-			"Tooltip": "Display the live state of any Home Assistant entity on a Stream Deck key.",
+			"Tooltip": "Display the live state of any Home Assistant entity on a Stream Deck key. Updates in real time via WebSocket.",
 			"Controllers": ["Keypad"],
 			"States": [
 				{
@@ -77,6 +81,7 @@
 			],
 			"PropertyInspectorPath": "ui/monitor.html",
 			"SupportedInMultiActions": false,
+			"UserTitleEnabled": false,
 			"DisableCaching": true
 		},
 		{
@@ -93,7 +98,7 @@
 			],
 			"PropertyInspectorPath": "ui/scene.html",
 			"SupportedInMultiActions": true,
-			"DisableCaching": false
+			"UserTitleEnabled": true
 		}
 	]
 }

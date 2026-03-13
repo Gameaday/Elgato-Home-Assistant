@@ -20,20 +20,14 @@ import { CallServiceSettings, GlobalSettings } from "../settings.js";
 @action({ UUID: "com.gameaday.homeassistant.call-service" })
 export class CallService extends SingletonAction<CallServiceSettings> {
 	override async onWillAppear(ev: WillAppearEvent<CallServiceSettings>): Promise<void> {
-		const { settings } = ev.payload;
-		const label = settings.label || `${settings.domain || "?"}.${settings.service || "?"}`;
-		await ev.action.setTitle(label);
+		await this.updateTitle(ev.action, ev.payload.settings);
 	}
 
 	override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<CallServiceSettings>): Promise<void> {
-		const { settings } = ev.payload;
-		const label = settings.label || `${settings.domain || "?"}.${settings.service || "?"}`;
-		await ev.action.setTitle(label);
+		await this.updateTitle(ev.action, ev.payload.settings);
 	}
 
-	/**
-	 * Calls the configured service when the key is pressed.
-	 */
+	/** Calls the configured service when the key is pressed. */
 	override async onKeyDown(ev: KeyDownEvent<CallServiceSettings>): Promise<void> {
 		const { settings } = ev.payload;
 
@@ -71,5 +65,19 @@ export class CallService extends SingletonAction<CallServiceSettings> {
 			streamDeck.logger.error(`CallService failed: ${err}`);
 			await ev.action.showAlert();
 		}
+	}
+
+	// ── Helpers ───────────────────────────────────────────────────────────────
+
+	private async updateTitle(
+		action: { setTitle(t: string): Promise<void> },
+		settings: CallServiceSettings
+	): Promise<void> {
+		const label =
+			settings.label?.trim() ||
+			(settings.domain && settings.service
+				? `${settings.domain}.${settings.service}`
+				: "");
+		await action.setTitle(label);
 	}
 }

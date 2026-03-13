@@ -1,6 +1,6 @@
 {
 	"name": "com.gameaday.homeassistant",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Home Assistant integration for Elgato Stream Deck – control and monitor any entity, call services, and activate scenes.",
 	"type": "module",
 	"scripts": {

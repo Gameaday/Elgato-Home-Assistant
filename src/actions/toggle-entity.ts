@@ -2,13 +2,14 @@ import {
 	action,
 	DidReceiveSettingsEvent,
 	KeyDownEvent,
+	KeyAction,
 	SingletonAction,
 	WillAppearEvent,
 	WillDisappearEvent,
 	streamDeck
 } from "@elgato/streamdeck";
 
-import { HaClient } from "../ha-client.js";
+import { HaClient, HaState, HaWsClient, StateChangedCallback } from "../ha-client.js";
 import { GlobalSettings, ToggleSettings } from "../settings.js";
 
 /**
@@ -16,42 +17,37 @@ import { GlobalSettings, ToggleSettings } from "../settings.js";
  *
  * Toggles a Home Assistant entity (light, switch, input_boolean, fan, …) on
  * or off when the key is pressed.  The button image and title automatically
- * reflect the live entity state (on / off).
+ * reflect the live entity state via real-time WebSocket events, with a REST
+ * API fallback for the initial render.
  */
 @action({ UUID: "com.gameaday.homeassistant.toggle" })
 export class ToggleEntity extends SingletonAction<ToggleSettings> {
-	/** Per-action polling timers keyed by action context id. */
-	private pollingTimers = new Map<string, ReturnType<typeof setInterval>>();
+	/** Map from action id → { entityId, callback } for clean WS unsubscription. */
+	private readonly wsSubscriptions = new Map<string, { entityId: string; callback: StateChangedCallback }>();
 
-	/**
-	 * Called when a key that uses this action becomes visible on the deck.
-	 * Starts polling the entity state to keep the button in sync.
-	 */
 	override async onWillAppear(ev: WillAppearEvent<ToggleSettings>): Promise<void> {
-		await this.refreshState(ev.action.id, ev.payload.settings);
-		this.startPolling(ev.action.id, ev.payload.settings);
+		const { settings } = ev.payload;
+		if (!ev.action.isKey()) return;
+
+		await this.syncState(ev.action, settings);
+		this.registerWsSubscription(ev.action, settings);
 	}
 
-	/**
-	 * Called when the key is no longer visible (profile change, page switch, etc.).
-	 * Stops the polling timer to avoid unnecessary network traffic.
-	 */
 	override onWillDisappear(ev: WillDisappearEvent<ToggleSettings>): void {
-		this.stopPolling(ev.action.id);
+		this.removeWsSubscription(ev.action.id);
 	}
 
-	/**
-	 * Called when the user updates settings in the property inspector.
-	 */
 	override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<ToggleSettings>): Promise<void> {
-		this.stopPolling(ev.action.id);
-		await this.refreshState(ev.action.id, ev.payload.settings);
-		this.startPolling(ev.action.id, ev.payload.settings);
+		if (!ev.action.isKey()) return;
+
+		const { settings } = ev.payload;
+
+		this.removeWsSubscription(ev.action.id);
+		await this.syncState(ev.action, settings);
+		this.registerWsSubscription(ev.action, settings);
 	}
 
-	/**
-	 * Called when the key is pressed – toggles the entity.
-	 */
+	/** Toggles the entity on key press. */
 	override async onKeyDown(ev: KeyDownEvent<ToggleSettings>): Promise<void> {
 		const { settings } = ev.payload;
 
@@ -71,38 +67,45 @@ export class ToggleEntity extends SingletonAction<ToggleSettings> {
 		try {
 			const client = new HaClient(global);
 			await client.toggle(settings.entityId);
-			// Refresh immediately after toggling so the button reflects the new state
-			await this.refreshState(ev.action.id, settings);
+			// Sync state immediately after toggle; WS event will also arrive shortly
+			await this.syncState(ev.action, settings);
 		} catch (err) {
 			streamDeck.logger.error(`Toggle failed: ${err}`);
 			await ev.action.showAlert();
 		}
 	}
 
-	// ── helpers ─────────────────────────────────────────────────────────────
+	// ── WebSocket helpers ────────────────────────────────────────────────────
 
-	private startPolling(actionId: string, settings: ToggleSettings): void {
+	private registerWsSubscription(action: KeyAction<ToggleSettings>, settings: ToggleSettings): void {
 		if (!settings.entityId) return;
-		const timer = setInterval(() => {
-			this.refreshState(actionId, settings).catch((err) =>
-				streamDeck.logger.warn(`Toggle poll error: ${err}`)
+
+		this.removeWsSubscription(action.id);
+
+		const callback: StateChangedCallback = (_entityId, newState) => {
+			this.applyState(action, settings, newState).catch((err) =>
+				streamDeck.logger.warn(`Toggle WS state update error: ${err}`)
 			);
-		}, 5000);
-		this.pollingTimers.set(actionId, timer);
+		};
+
+		this.wsSubscriptions.set(action.id, { entityId: settings.entityId, callback });
+		HaWsClient.instance.subscribe(settings.entityId, callback);
 	}
 
-	private stopPolling(actionId: string): void {
-		const timer = this.pollingTimers.get(actionId);
-		if (timer) {
-			clearInterval(timer);
-			this.pollingTimers.delete(actionId);
-		}
+	private removeWsSubscription(actionId: string): void {
+		const sub = this.wsSubscriptions.get(actionId);
+		if (!sub) return;
+		HaWsClient.instance.unsubscribe(sub.entityId, sub.callback);
+		this.wsSubscriptions.delete(actionId);
 	}
+
+	// ── State helpers ─────────────────────────────────────────────────────────
 
 	/**
-	 * Fetches the current entity state and updates the key image + title.
+	 * Fetches the current state via REST and updates the key image and title.
+	 * Used on first appearance and immediately after a toggle press.
 	 */
-	private async refreshState(actionId: string, settings: ToggleSettings): Promise<void> {
+	private async syncState(action: KeyAction<ToggleSettings>, settings: ToggleSettings): Promise<void> {
 		if (!settings.entityId) return;
 
 		const global = await streamDeck.settings.getGlobalSettings<GlobalSettings>();
@@ -111,22 +114,25 @@ export class ToggleEntity extends SingletonAction<ToggleSettings> {
 		try {
 			const client = new HaClient(global);
 			const state = await client.getState(settings.entityId);
-			const isOn = state.state === "on";
-
-			// Update only key actions (setState is not available on DialAction)
-			for (const act of this.actions) {
-				if (act.id !== actionId) continue;
-				// setState only exists on KeyAction (not DialAction)
-				if ("setState" in act && typeof act.setState === "function") {
-					await (act as { setState(s: number): Promise<void> }).setState(isOn ? 1 : 0);
-				}
-				const label = isOn
-					? (settings.labelOn ?? state.state)
-					: (settings.labelOff ?? state.state);
-				await act.setTitle(label || "");
-			}
+			await this.applyState(action, settings, state);
 		} catch (err) {
-			streamDeck.logger.warn(`Toggle refreshState error: ${err}`);
+			streamDeck.logger.warn(`Toggle syncState error: ${err}`);
 		}
 	}
+
+	/** Applies a HA state to the Stream Deck key (image state + title). */
+	private async applyState(
+		action: KeyAction<ToggleSettings>,
+		settings: ToggleSettings,
+		state: HaState
+	): Promise<void> {
+		const isOn = state.state === "on";
+		await action.setState(isOn ? 1 : 0);
+
+		const label = isOn
+			? (settings.labelOn ?? state.state)
+			: (settings.labelOff ?? state.state);
+		await action.setTitle(label);
+	}
 }
+

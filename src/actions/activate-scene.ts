@@ -14,29 +14,20 @@ import { GlobalSettings, SceneSettings } from "../settings.js";
  * Activate Scene action.
  *
  * Activates a Home Assistant scene when the key is pressed.
- * The scene entity_id is selected via the property inspector.
+ * The scene entity_id is selected via the property inspector; a human-readable
+ * name is derived automatically from the entity_id when no custom label is set.
  */
 @action({ UUID: "com.gameaday.homeassistant.scene" })
 export class ActivateScene extends SingletonAction<SceneSettings> {
 	override async onWillAppear(ev: WillAppearEvent<SceneSettings>): Promise<void> {
-		const { settings } = ev.payload;
-		const label = settings.label || this.friendlySceneName(settings.entityId);
-		if (label) {
-			await ev.action.setTitle(label);
-		}
+		await this.updateTitle(ev.action, ev.payload.settings);
 	}
 
 	override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<SceneSettings>): Promise<void> {
-		const { settings } = ev.payload;
-		const label = settings.label || this.friendlySceneName(settings.entityId);
-		if (label) {
-			await ev.action.setTitle(label);
-		}
+		await this.updateTitle(ev.action, ev.payload.settings);
 	}
 
-	/**
-	 * Activates the configured scene when the key is pressed.
-	 */
+	/** Activates the configured scene when the key is pressed. */
 	override async onKeyDown(ev: KeyDownEvent<SceneSettings>): Promise<void> {
 		const { settings } = ev.payload;
 
@@ -64,7 +55,17 @@ export class ActivateScene extends SingletonAction<SceneSettings> {
 		}
 	}
 
-	// ── helpers ─────────────────────────────────────────────────────────────
+	// ── Helpers ───────────────────────────────────────────────────────────────
+
+	private async updateTitle(
+		action: { setTitle(t: string): Promise<void> },
+		settings: SceneSettings
+	): Promise<void> {
+		const label = settings.label?.trim() || this.friendlySceneName(settings.entityId);
+		if (label) {
+			await action.setTitle(label);
+		}
+	}
 
 	/**
 	 * Derives a human-readable name from a scene entity_id.

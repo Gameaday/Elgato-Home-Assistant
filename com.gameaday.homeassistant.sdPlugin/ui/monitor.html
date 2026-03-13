@@ -20,8 +20,8 @@
 
 		<div class="pi-row-inline">
 			<div class="pi-row">
-				<label for="pollInterval">Refresh interval (s)</label>
-				<input id="pollInterval" type="number" min="1" max="3600" placeholder="10" />
+				<label for="pollInterval">Poll fallback (s)</label>
+				<input id="pollInterval" type="number" min="5" max="3600" placeholder="30" />
 			</div>
 			<div class="pi-row">
 				<label for="unit">Unit suffix</label>
@@ -35,8 +35,8 @@
 		</div>
 
 		<p class="pi-note">
-			The entity state is refreshed every <strong>N seconds</strong> and displayed
-			directly on the Stream Deck key. Any entity type is supported.
+			State is updated in <strong>real time</strong> via the Home Assistant WebSocket
+			API. The poll interval is only used as a fallback when WebSocket is unavailable.
 		</p>
 
 		<p class="pi-note">
@@ -53,23 +53,21 @@
 
 			HAPI.initPI({
 				onSettings(settings) {
-					// All domains – monitor can watch any entity
 					HAPI.loadEntities("entityId", [], settings.entityId);
 
-					document.getElementById("pollInterval").value = settings.pollInterval ?? 10;
+					document.getElementById("pollInterval").value = settings.pollInterval ?? 30;
 					document.getElementById("unit").value         = settings.unit         ?? "";
 					document.getElementById("showName").checked   = settings.showName     ?? false;
 				}
 			});
 
-			// ── Save on change ───────────────────────────────────────────────
 			document.getElementById("entityId").addEventListener("change", save);
 			document.getElementById("pollInterval").addEventListener("input", save);
 			document.getElementById("unit").addEventListener("input", save);
 			document.getElementById("showName").addEventListener("change", save);
 
 			function save() {
-				const interval = Math.max(1, parseInt(document.getElementById("pollInterval").value, 10) || 10);
+				const interval = Math.max(5, parseInt(document.getElementById("pollInterval").value, 10) || 30);
 				HAPI.saveSettings({
 					entityId:     document.getElementById("entityId").value,
 					pollInterval: interval,
@@ -81,3 +79,4 @@
 	</script>
 </body>
 </html>
+

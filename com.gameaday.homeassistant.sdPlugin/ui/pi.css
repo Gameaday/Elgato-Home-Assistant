@@ -42,6 +42,7 @@ body {
 label { font-size: 8.5pt; color: var(--sd-label); }
 
 input[type="text"],
+input[type="password"],
 input[type="number"],
 select,
 textarea {
