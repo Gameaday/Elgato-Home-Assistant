@@ -1,11 +1,14 @@
 import {
 	action,
+	DialAction,
 	DidReceiveSettingsEvent,
+	KeyAction,
 	SingletonAction,
+	TouchTapEvent,
 	WillAppearEvent,
 	WillDisappearEvent,
-	streamDeck
 } from "@elgato/streamdeck";
+import streamDeck from "@elgato/streamdeck";
 
 import { HaClient, HaState, HaWsClient, StateChangedCallback } from "../ha-client.js";
 import { GlobalSettings, MonitorSettings } from "../settings.js";
@@ -16,9 +19,14 @@ const FALLBACK_POLL_INTERVAL_S = 30;
  * Monitor State action.
  *
  * Displays the live state of any Home Assistant entity directly on the
- * Stream Deck key.  Primarily driven by real-time WebSocket events; a
- * configurable polling interval acts as a fallback when the WS is
- * unavailable.
+ * Stream Deck key or dial touchscreen.
+ *
+ * **Keypad**: Shows state as the button title.
+ * **Encoder (Stream Deck +)**: Shows entity name, value, and unit on the
+ * touchscreen via a custom layout. Touch to force-refresh.
+ *
+ * Primarily driven by real-time WebSocket events; a configurable polling
+ * interval acts as a fallback when the WS is unavailable.
  */
 @action({ UUID: "com.gameaday.homeassistant.monitor" })
 export class MonitorState extends SingletonAction<MonitorSettings> {
@@ -26,13 +34,14 @@ export class MonitorState extends SingletonAction<MonitorSettings> {
 	private readonly wsSubscriptions = new Map<string, { entityId: string; callback: StateChangedCallback }>();
 	private readonly pollTimers = new Map<string, ReturnType<typeof setInterval>>();
 
+	// ── Lifecycle ─────────────────────────────────────────────────────────────
+
 	override async onWillAppear(ev: WillAppearEvent<MonitorSettings>): Promise<void> {
-		if (!ev.action.isKey()) return;
 		const { settings } = ev.payload;
 
-		await this.syncState(ev.action.id, settings);
-		this.registerWsSubscription(ev.action.id, settings);
-		this.startPollFallback(ev.action.id, settings);
+		await this.syncState(ev.action, settings);
+		this.registerWsSubscription(ev.action, settings);
+		this.startPollFallback(ev.action, settings);
 	}
 
 	override onWillDisappear(ev: WillDisappearEvent<MonitorSettings>): void {
@@ -40,33 +49,45 @@ export class MonitorState extends SingletonAction<MonitorSettings> {
 	}
 
 	override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<MonitorSettings>): Promise<void> {
-		if (!ev.action.isKey()) return;
 		const { settings } = ev.payload;
 
 		this.cleanup(ev.action.id);
-		await this.syncState(ev.action.id, settings);
-		this.registerWsSubscription(ev.action.id, settings);
-		this.startPollFallback(ev.action.id, settings);
+		await this.syncState(ev.action, settings);
+		this.registerWsSubscription(ev.action, settings);
+		this.startPollFallback(ev.action, settings);
+	}
+
+	// ── Encoder events ───────────────────────────────────────────────────────
+
+	/** Touch the touchscreen → force refresh state. */
+	override async onTouchTap(ev: TouchTapEvent<MonitorSettings>): Promise<void> {
+		await this.syncState(ev.action, ev.payload.settings);
 	}
 
 	// ── WebSocket ─────────────────────────────────────────────────────────────
 
-	private registerWsSubscription(actionId: string, settings: MonitorSettings): void {
+	private registerWsSubscription(
+		action: KeyAction<MonitorSettings> | DialAction<MonitorSettings>,
+		settings: MonitorSettings
+	): void {
 		if (!settings.entityId) return;
 
 		const callback: StateChangedCallback = (_entityId, newState) => {
-			this.applyStateToAction(actionId, settings, newState).catch((err) =>
+			this.applyStateToAction(action, settings, newState).catch((err) =>
 				streamDeck.logger.warn(`Monitor WS update error: ${err}`)
 			);
 		};
 
-		this.wsSubscriptions.set(actionId, { entityId: settings.entityId, callback });
+		this.wsSubscriptions.set(action.id, { entityId: settings.entityId, callback });
 		HaWsClient.instance.subscribe(settings.entityId, callback);
 	}
 
 	// ── Polling fallback ──────────────────────────────────────────────────────
 
-	private startPollFallback(actionId: string, settings: MonitorSettings): void {
+	private startPollFallback(
+		action: KeyAction<MonitorSettings> | DialAction<MonitorSettings>,
+		settings: MonitorSettings
+	): void {
 		if (!settings.entityId) return;
 
 		const intervalMs = Math.max(5_000, (settings.pollInterval ?? FALLBACK_POLL_INTERVAL_S) * 1_000);
@@ -74,13 +95,13 @@ export class MonitorState extends SingletonAction<MonitorSettings> {
 		const timer = setInterval(() => {
 			// Only poll when WS is not connected so we don't duplicate work
 			if (!HaWsClient.instance.isConnected) {
-				this.syncState(actionId, settings).catch((err) =>
+				this.syncState(action, settings).catch((err) =>
 					streamDeck.logger.warn(`Monitor poll error: ${err}`)
 				);
 			}
 		}, intervalMs);
 
-		this.pollTimers.set(actionId, timer);
+		this.pollTimers.set(action.id, timer);
 	}
 
 	// ── Helpers ───────────────────────────────────────────────────────────────
@@ -99,7 +120,10 @@ export class MonitorState extends SingletonAction<MonitorSettings> {
 		}
 	}
 
-	private async syncState(actionId: string, settings: MonitorSettings): Promise<void> {
+	private async syncState(
+		action: KeyAction<MonitorSettings> | DialAction<MonitorSettings>,
+		settings: MonitorSettings
+	): Promise<void> {
 		if (!settings.entityId) return;
 
 		const global = await streamDeck.settings.getGlobalSettings<GlobalSettings>();
@@ -108,40 +132,42 @@ export class MonitorState extends SingletonAction<MonitorSettings> {
 		try {
 			const client = new HaClient(global);
 			const state = await client.getState(settings.entityId);
-			await this.applyStateToAction(actionId, settings, state);
+			await this.applyStateToAction(action, settings, state);
 		} catch (err) {
 			streamDeck.logger.warn(`Monitor syncState error: ${err}`);
 		}
 	}
 
 	private async applyStateToAction(
-		actionId: string,
+		action: KeyAction<MonitorSettings> | DialAction<MonitorSettings>,
 		settings: MonitorSettings,
 		state: HaState
 	): Promise<void> {
-		const title = this.buildTitle(settings, state);
-
-		for (const act of this.actions) {
-			if (act.id !== actionId) continue;
-			await act.setTitle(title);
-		}
-	}
-
-	/** Builds the key title from the entity state and display settings. */
-	private buildTitle(settings: MonitorSettings, state: HaState): string {
 		const rawValue = state.state;
 		const unit = settings.unit?.trim() ?? "";
 		const value = unit ? `${rawValue} ${unit}` : rawValue;
 
-		if (settings.showName) {
-			const friendlyName =
-				(state.attributes["friendly_name"] as string | undefined) ??
-				settings.entityId?.split(".")[1]?.replace(/_/g, " ") ??
-				"";
-			return friendlyName ? `${friendlyName}\n${value}` : value;
+		const friendlyName =
+			(state.attributes["friendly_name"] as string | undefined) ??
+			settings.entityId?.split(".")[1]?.replace(/_/g, " ") ?? "";
+
+		if (action.isKey()) {
+			const title = settings.showName && friendlyName
+				? `${friendlyName}\n${value}`
+				: value;
+			await action.setTitle(title);
 		}
 
-		return value;
+		if (action.isDial()) {
+			const feedback: Record<string, string> = {
+				title: friendlyName,
+				value: rawValue
+			};
+			if (unit) {
+				feedback.unit = unit;
+			}
+			await action.setFeedback(feedback);
+		}
 	}
 }
 

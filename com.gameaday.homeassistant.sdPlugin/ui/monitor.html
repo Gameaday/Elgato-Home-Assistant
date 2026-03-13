@@ -12,6 +12,11 @@
 		<div class="pi-heading">Monitor State</div>
 
 		<div class="pi-row">
+			<label for="entitySearch">Search Entities</label>
+			<input id="entitySearch" type="text" placeholder="Type to filter…" />
+		</div>
+
+		<div class="pi-row">
 			<label for="entityId">Entity</label>
 			<select id="entityId">
 				<option value="">— Select entity —</option>
@@ -54,6 +59,7 @@
 			HAPI.initPI({
 				onSettings(settings) {
 					HAPI.loadEntities("entityId", [], settings.entityId);
+					HAPI.enableEntitySearch("entitySearch", "entityId");
 
 					document.getElementById("pollInterval").value = settings.pollInterval ?? 30;
 					document.getElementById("unit").value         = settings.unit         ?? "";

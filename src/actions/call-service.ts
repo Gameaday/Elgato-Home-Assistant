@@ -4,8 +4,8 @@ import {
 	KeyDownEvent,
 	SingletonAction,
 	WillAppearEvent,
-	streamDeck
 } from "@elgato/streamdeck";
+import streamDeck from "@elgato/streamdeck";
 
 import { HaClient } from "../ha-client.js";
 import { CallServiceSettings, GlobalSettings } from "../settings.js";

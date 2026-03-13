@@ -12,6 +12,11 @@
 		<div class="pi-heading">Toggle Entity</div>
 
 		<div class="pi-row">
+			<label for="entitySearch">Search Entities</label>
+			<input id="entitySearch" type="text" placeholder="Type to filter…" />
+		</div>
+
+		<div class="pi-row">
 			<label for="entityId">Entity</label>
 			<select id="entityId">
 				<option value="">— Select entity —</option>
@@ -55,6 +60,7 @@
 				onSettings(settings, globalSettings) {
 					// Populate entity dropdown
 					HAPI.loadEntities("entityId", ENTITY_DOMAINS, settings.entityId);
+					HAPI.enableEntitySearch("entitySearch", "entityId");
 
 					// Populate label fields
 					document.getElementById("labelOn").value  = settings.labelOn  ?? "";

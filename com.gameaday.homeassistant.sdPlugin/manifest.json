@@ -4,7 +4,7 @@
 	"Category": "Home Assistant",
 	"CategoryIcon": "imgs/plugin/category",
 	"CodePath": "bin/plugin.js",
-	"Description": "Control and monitor your Home Assistant smart home directly from your Stream Deck. Toggle entities, call services, activate scenes, and display live entity states in real time.",
+	"Description": "Control and monitor your Home Assistant smart home directly from your Stream Deck. Toggle entities, call services, activate scenes, and display live entity states — with full Stream Deck + dial support.",
 	"Icon": "imgs/plugin/icon",
 	"Name": "Home Assistant",
 	"Nodejs": {
@@ -13,12 +13,12 @@
 	},
 	"SDKVersion": 3,
 	"Software": {
-		"MinimumVersion": "6.9"
+		"MinimumVersion": "7.0"
 	},
 	"OS": [
 		{
 			"Platform": "mac",
-			"MinimumVersion": "10.15"
+			"MinimumVersion": "13"
 		},
 		{
 			"Platform": "windows",
@@ -28,23 +28,36 @@
 	"URL": "https://github.com/Gameaday/Elgato-Home-Assistant",
 	"SupportURL": "https://github.com/Gameaday/Elgato-Home-Assistant/issues",
 	"UUID": "com.gameaday.homeassistant",
-	"Version": "2.0.0",
+	"Version": "2.1.0.0",
 	"Actions": [
 		{
 			"Icon": "imgs/actions/toggle/icon",
 			"Name": "Toggle Entity",
 			"UUID": "com.gameaday.homeassistant.toggle",
-			"Tooltip": "Toggle any Home Assistant entity (light, switch, input_boolean, etc.) on or off. Button reflects live state in real time.",
-			"Controllers": ["Keypad"],
+			"Tooltip": "Toggle any Home Assistant entity on or off. Supports Stream Deck + dials: press to toggle, rotate to adjust brightness.",
+			"Controllers": ["Keypad", "Encoder"],
 			"DisableAutomaticStates": true,
+			"Encoder": {
+				"Icon": "imgs/actions/toggle/encoder/icon",
+				"layout": "layouts/toggle-layout.json",
+				"TriggerDescription": {
+					"Push": "Toggle",
+					"Rotate": "Brightness",
+					"Touch": "Toggle"
+				}
+			},
 			"States": [
 				{
 					"Image": "imgs/actions/toggle/off",
-					"Name": "Off"
+					"Name": "Off",
+					"TitleAlignment": "bottom",
+					"FontSize": 12
 				},
 				{
 					"Image": "imgs/actions/toggle/on",
-					"Name": "On"
+					"Name": "On",
+					"TitleAlignment": "bottom",
+					"FontSize": 12
 				}
 			],
 			"PropertyInspectorPath": "ui/toggle.html",
@@ -71,8 +84,16 @@
 			"Icon": "imgs/actions/monitor/icon",
 			"Name": "Monitor State",
 			"UUID": "com.gameaday.homeassistant.monitor",
-			"Tooltip": "Display the live state of any Home Assistant entity on a Stream Deck key. Updates in real time via WebSocket.",
-			"Controllers": ["Keypad"],
+			"Tooltip": "Display the live state of any Home Assistant entity. Updates in real time via WebSocket. Supports Stream Deck + dial touchscreen display.",
+			"Controllers": ["Keypad", "Encoder"],
+			"Encoder": {
+				"Icon": "imgs/actions/monitor/encoder/icon",
+				"layout": "layouts/monitor-layout.json",
+				"TriggerDescription": {
+					"Rotate": "Browse entities",
+					"Touch": "Refresh"
+				}
+			},
 			"States": [
 				{
 					"Image": "imgs/actions/monitor/icon",

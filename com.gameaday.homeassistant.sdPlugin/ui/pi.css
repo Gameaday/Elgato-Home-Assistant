@@ -136,5 +136,11 @@ button:disabled { opacity: 0.4; cursor: default; }
 /* ── Loading spinner inside select ───────────────────────────────────────── */
 select.loading { opacity: 0.5; pointer-events: none; }
 
+/* ── Search input clear button ───────────────────────────────────────────── */
+input[type="text"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-cancel-button {
+	-webkit-appearance: none;
+}
+
 a { color: var(--ha-blue); text-decoration: none; }
 a:hover { text-decoration: underline; }

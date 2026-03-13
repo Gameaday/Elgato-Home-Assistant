@@ -1,5 +1,5 @@
 /**
- * pi-utils.js  (v2 – SDK 3 compatible)
+ * pi-utils.js  (v3 – SDK 3 compatible, with entity search)
  * Shared utilities for all Home Assistant Stream Deck property inspectors.
  *
  * Each inspector calls `HAPI.initPI({ ... })` to wire up the Stream Deck
@@ -101,6 +101,9 @@
 
 	// ── Entity loader ─────────────────────────────────────────────────────────
 
+	/** Cached list of entities fetched from HA, keyed by selectId. */
+	const _entityCache = new Map();
+
 	/**
 	 * Fetch all Home Assistant entity states and populate a `<select>` element.
 	 * Entities are grouped by domain and sorted alphabetically.
@@ -138,53 +141,95 @@
 				? entities.filter(e => domains.includes(e.entity_id.split(".")[0]))
 				: entities;
 
-			// Group by domain, then sort within each group
-			const byDomain = /** @type {Map<string, typeof filtered>} */ (new Map());
-			for (const e of filtered) {
-				const domain = e.entity_id.split(".")[0];
-				if (!byDomain.has(domain)) byDomain.set(domain, []);
-				byDomain.get(domain).push(e);
-			}
-			for (const arr of byDomain.values()) {
-				arr.sort((a, b) => a.entity_id.localeCompare(b.entity_id));
-			}
-			const sortedDomains = [...byDomain.keys()].sort();
+			// Cache for search filtering
+			_entityCache.set(selectId, { filtered, selectedId });
 
-			// Track all rendered entity IDs to check if selected one is present
-			const renderedIds = new Set();
-
-			sel.innerHTML = '<option value="">— Select entity —</option>';
-
-			for (const domain of sortedDomains) {
-				const group = document.createElement("optgroup");
-				group.label = domain;
-
-				for (const e of byDomain.get(domain)) {
-					const opt  = document.createElement("option");
-					opt.value  = e.entity_id;
-					const name = e.attributes?.friendly_name ?? e.entity_id.split(".")[1];
-					opt.textContent = `${name} (${e.entity_id})`;
-					if (e.entity_id === selectedId) opt.selected = true;
-					renderedIds.add(e.entity_id);
-					group.appendChild(opt);
-				}
-
-				sel.appendChild(group);
-			}
-
-			// Preserve any previously-saved value even if it's not in the filtered list
-			if (selectedId && !renderedIds.has(selectedId)) {
-				const fallback   = document.createElement("option");
-				fallback.value   = selectedId;
-				fallback.textContent = `${selectedId} (not in list)`;
-				fallback.selected = true;
-				sel.prepend(fallback);
-			}
+			_renderEntities(sel, filtered, selectedId, "");
 		} catch (err) {
 			sel.innerHTML = `<option value="">⚠ ${err.message}</option>`;
 		} finally {
 			sel.disabled = false;
 		}
+	}
+
+	/**
+	 * Render filtered entities into the select element.
+	 * @param {HTMLSelectElement} sel
+	 * @param {Array} entities
+	 * @param {string} selectedId
+	 * @param {string} search
+	 */
+	function _renderEntities(sel, entities, selectedId, search) {
+		const searchLower = (search || "").toLowerCase();
+
+		// Filter by search string (entity_id or friendly_name)
+		const matching = searchLower
+			? entities.filter(e => {
+				const name = (e.attributes?.friendly_name ?? "").toLowerCase();
+				return e.entity_id.toLowerCase().includes(searchLower) || name.includes(searchLower);
+			})
+			: entities;
+
+		// Group by domain, then sort within each group
+		const byDomain = new Map();
+		for (const e of matching) {
+			const domain = e.entity_id.split(".")[0];
+			if (!byDomain.has(domain)) byDomain.set(domain, []);
+			byDomain.get(domain).push(e);
+		}
+		for (const arr of byDomain.values()) {
+			arr.sort((a, b) => a.entity_id.localeCompare(b.entity_id));
+		}
+		const sortedDomains = [...byDomain.keys()].sort();
+
+		// Track all rendered entity IDs to check if selected one is present
+		const renderedIds = new Set();
+
+		sel.innerHTML = '<option value="">— Select entity —</option>';
+
+		for (const domain of sortedDomains) {
+			const group = document.createElement("optgroup");
+			group.label = domain;
+
+			for (const e of byDomain.get(domain)) {
+				const opt  = document.createElement("option");
+				opt.value  = e.entity_id;
+				const name = e.attributes?.friendly_name ?? e.entity_id.split(".")[1];
+				opt.textContent = `${name} (${e.entity_id})`;
+				if (e.entity_id === selectedId) opt.selected = true;
+				renderedIds.add(e.entity_id);
+				group.appendChild(opt);
+			}
+
+			sel.appendChild(group);
+		}
+
+		// Preserve any previously-saved value even if it's not in the filtered list
+		if (selectedId && !renderedIds.has(selectedId)) {
+			const fallback   = document.createElement("option");
+			fallback.value   = selectedId;
+			fallback.textContent = `${selectedId} (not in list)`;
+			fallback.selected = true;
+			sel.prepend(fallback);
+		}
+	}
+
+	/**
+	 * Wire up a search input to filter a pre-loaded entity select.
+	 *
+	 * @param {string} searchInputId  ID of the <input> used as a search box.
+	 * @param {string} selectId       ID of the <select> populated by loadEntities.
+	 */
+	function enableEntitySearch(searchInputId, selectId) {
+		const input = document.getElementById(searchInputId);
+		const sel   = document.getElementById(selectId);
+		if (!input || !sel) return;
+
+		input.addEventListener("input", () => {
+			const cached = _entityCache.get(selectId);
+			if (!cached) return;
+			_renderEntities(sel, cached.filtered, cached.selectedId, input.value);
+		});
 	}
 
 	// ── Connection test ───────────────────────────────────────────────────────
@@ -219,6 +264,6 @@
 	}
 
 	// ── Exports ───────────────────────────────────────────────────────────────
-	global.HAPI = { initPI, saveSettings, saveGlobalSettings, loadEntities, testConnection };
+	global.HAPI = { initPI, saveSettings, saveGlobalSettings, loadEntities, enableEntitySearch, testConnection };
 })(window);
 

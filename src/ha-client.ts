@@ -1,4 +1,4 @@
-import { streamDeck } from "@elgato/streamdeck";
+import streamDeck from "@elgato/streamdeck";
 import { GlobalSettings } from "./settings.js";
 
 /**
@@ -99,6 +99,20 @@ export class HaClient {
 	/** Activates a scene. */
 	async activateScene(entityId: string): Promise<void> {
 		await this.callService("scene", "turn_on", { entity_id: entityId });
+	}
+
+	/**
+	 * Sets the brightness of a light entity.
+	 * @param entityId - light entity, e.g. "light.living_room"
+	 * @param brightness - 0–255
+	 */
+	async setBrightness(entityId: string, brightness: number): Promise<void> {
+		const clamped = Math.max(0, Math.min(255, Math.round(brightness)));
+		if (clamped === 0) {
+			await this.callService("light", "turn_off", { entity_id: entityId });
+		} else {
+			await this.callService("light", "turn_on", { entity_id: entityId, brightness: clamped });
+		}
 	}
 
 	/**

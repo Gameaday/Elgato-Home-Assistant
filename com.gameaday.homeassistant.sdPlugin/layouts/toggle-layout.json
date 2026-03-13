@@ -1,0 +1,34 @@
+{
+	"id": "com.gameaday.homeassistant.toggle.layout",
+	"items": [
+		{
+			"key": "title",
+			"type": "text",
+			"rect": [0, 0, 200, 30],
+			"font": {
+				"size": 16,
+				"weight": 600
+			},
+			"alignment": "center",
+			"color": "#FFFFFF",
+			"opacity": 0.8
+		},
+		{
+			"key": "icon",
+			"type": "pixmap",
+			"rect": [76, 28, 48, 48],
+			"opacity": 1.0
+		},
+		{
+			"key": "value",
+			"type": "text",
+			"rect": [0, 76, 200, 24],
+			"font": {
+				"size": 14,
+				"weight": 600
+			},
+			"alignment": "center",
+			"color": "#18BCF2"
+		}
+	]
+}
