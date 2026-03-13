@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Home Assistant – Global Settings</title>
+	<link rel="stylesheet" href="pi.css" />
+	<style>
+		.pi-row-actions {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+		}
+
+		.pi-row-actions button { flex-shrink: 0; }
+		.pi-row-actions .pi-status { flex: 1; }
+	</style>
+</head>
+<body>
+	<div class="pi-wrapper">
+
+		<div class="pi-heading">Home Assistant Connection</div>
+
+		<div class="pi-row">
+			<label for="haUrl">Instance URL</label>
+			<input id="haUrl" type="text" placeholder="http://homeassistant.local:8123" />
+		</div>
+
+		<div class="pi-row">
+			<label for="haToken">Long-Lived Access Token</label>
+			<input id="haToken" type="password" placeholder="Paste your token here" />
+		</div>
+
+		<p class="pi-note">
+			Generate a token under <strong>Profile → Security</strong> in your Home Assistant UI.
+			<a href="https://www.home-assistant.io/docs/authentication/" target="_blank" rel="noopener noreferrer">Learn more ↗</a>
+		</p>
+
+		<div class="pi-row-actions">
+			<button id="btnTest">Test Connection</button>
+			<div id="status" class="pi-status">
+				<span class="dot"></span>
+				<span id="statusText">Not tested</span>
+			</div>
+		</div>
+
+	</div>
+
+	<script src="pi-utils.js"></script>
+	<script>
+		(function () {
+			"use strict";
+
+			let haUrl   = "";
+			let haToken = "";
+
+			function setStatus(cls, text) {
+				const el = document.getElementById("status");
+				el.className = `pi-status ${cls}`;
+				document.getElementById("statusText").textContent = text;
+			}
+
+			// ── Stream Deck global-settings bridge ─────────────────────────
+			window.connectElgatoStreamDeckSocket = function (port, uuid, registerEvent) {
+				const ws = new WebSocket(`ws://127.0.0.1:${port}`);
+
+				ws.onopen = () => {
+					ws.send(JSON.stringify({ event: registerEvent, uuid }));
+					ws.send(JSON.stringify({ event: "getGlobalSettings", context: uuid }));
+				};
+
+				ws.onmessage = (msg) => {
+					let data;
+					try { data = JSON.parse(msg.data); } catch { return; }
+
+					if (data.event === "didReceiveGlobalSettings") {
+						const s = data.payload?.settings ?? {};
+						haUrl   = s.haUrl   ?? "";
+						haToken = s.haToken ?? "";
+						document.getElementById("haUrl").value   = haUrl;
+						document.getElementById("haToken").value = haToken;
+					}
+				};
+
+				function saveSettings() {
+					ws.send(JSON.stringify({
+						event:   "setGlobalSettings",
+						context: uuid,
+						payload: { haUrl, haToken }
+					}));
+				}
+
+				document.getElementById("haUrl").addEventListener("input", (e) => {
+					haUrl = e.target.value.trim();
+					saveSettings();
+					setStatus("", "Not tested");
+				});
+
+				document.getElementById("haToken").addEventListener("input", (e) => {
+					haToken = e.target.value.trim();
+					saveSettings();
+					setStatus("", "Not tested");
+				});
+
+				document.getElementById("btnTest").addEventListener("click", async () => {
+					setStatus("checking", "Checking…");
+					document.getElementById("btnTest").disabled = true;
+
+					try {
+						const version = await HAPI.testConnection(haUrl, haToken);
+						setStatus("ok", `Connected · HA ${version}`);
+					} catch (err) {
+						setStatus("error", err.message || "Cannot reach Home Assistant.");
+					} finally {
+						document.getElementById("btnTest").disabled = false;
+					}
+				});
+			};
+		})();
+	</script>
+</body>
+</html>
+

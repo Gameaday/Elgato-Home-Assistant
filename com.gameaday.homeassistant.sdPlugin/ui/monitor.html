@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Monitor State</title>
+	<link rel="stylesheet" href="pi.css" />
+</head>
+<body>
+	<div class="pi-wrapper">
+
+		<div class="pi-heading">Monitor State</div>
+
+		<div class="pi-row">
+			<label for="entitySearch">Search Entities</label>
+			<input id="entitySearch" type="text" placeholder="Type to filter…" />
+		</div>
+
+		<div class="pi-row">
+			<label for="entityId">Entity</label>
+			<select id="entityId">
+				<option value="">— Select entity —</option>
+			</select>
+		</div>
+
+		<div class="pi-row-inline">
+			<div class="pi-row">
+				<label for="pollInterval">Poll fallback (s)</label>
+				<input id="pollInterval" type="number" min="5" max="3600" placeholder="30" />
+			</div>
+			<div class="pi-row">
+				<label for="unit">Unit suffix</label>
+				<input id="unit" type="text" placeholder="e.g. °C, %, lx" maxlength="16" />
+			</div>
+		</div>
+
+		<div class="pi-check">
+			<input id="showName" type="checkbox" />
+			<label for="showName">Show entity name above value</label>
+		</div>
+
+		<p class="pi-note">
+			State is updated in <strong>real time</strong> via the Home Assistant WebSocket
+			API. The poll interval is only used as a fallback when WebSocket is unavailable.
+		</p>
+
+		<p class="pi-note">
+			Configure your Home Assistant URL and token in the
+			<strong>global plugin settings</strong>.
+		</p>
+
+	</div>
+
+	<script src="pi-utils.js"></script>
+	<script>
+		(function () {
+			"use strict";
+
+			HAPI.initPI({
+				onSettings(settings) {
+					HAPI.loadEntities("entityId", [], settings.entityId);
+					HAPI.enableEntitySearch("entitySearch", "entityId");
+
+					document.getElementById("pollInterval").value = settings.pollInterval ?? 30;
+					document.getElementById("unit").value         = settings.unit         ?? "";
+					document.getElementById("showName").checked   = settings.showName     ?? false;
+				}
+			});
+
+			document.getElementById("entityId").addEventListener("change", save);
+			document.getElementById("pollInterval").addEventListener("input", save);
+			document.getElementById("unit").addEventListener("input", save);
+			document.getElementById("showName").addEventListener("change", save);
+
+			function save() {
+				const interval = Math.max(5, parseInt(document.getElementById("pollInterval").value, 10) || 30);
+				HAPI.saveSettings({
+					entityId:     document.getElementById("entityId").value,
+					pollInterval: interval,
+					unit:         document.getElementById("unit").value.trim(),
+					showName:     document.getElementById("showName").checked
+				});
+			}
+		})();
+	</script>
+</body>
+</html>
+

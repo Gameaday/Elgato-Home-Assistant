@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+  </defs>
+  <rect width="144" height="144" rx="16" fill="url(#bg)"/>
+  <!-- Eye / monitor icon -->
+  <ellipse cx="72" cy="64" rx="40" ry="24" fill="none" stroke="#18bcf2" stroke-width="5"/>
+  <circle cx="72" cy="64" r="12" fill="#18bcf2" opacity="0.9"/>
+  <circle cx="72" cy="64" r="5" fill="#1a1a2e"/>
+  <!-- Pulse / wave lines -->
+  <polyline points="30,90 40,90 48,80 56,100 64,72 72,90 80,90 88,82 96,90 114,90"
+            fill="none" stroke="#18bcf2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+  <text x="72" y="122" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#18bcf2" text-anchor="middle">MONITOR</text>
+</svg>

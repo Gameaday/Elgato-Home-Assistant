@@ -1,0 +1,5 @@
+node_modules/
+com.gameaday.homeassistant.sdPlugin/bin/
+*.log
+.DS_Store
+PLUGIN_RESEARCH.md
