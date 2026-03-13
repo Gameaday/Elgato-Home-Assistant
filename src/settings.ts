@@ -15,11 +15,11 @@ export interface GlobalSettings extends JsonObject {
  */
 export interface ToggleSettings extends JsonObject {
 	/** The entity_id to toggle, e.g. light.living_room */
-	entityId: string;
+	entityId?: string;
 	/** Optional label shown on the key when the state is "on". */
-	labelOn: string;
+	labelOn?: string;
 	/** Optional label shown on the key when the state is "off". */
-	labelOff: string;
+	labelOff?: string;
 }
 
 /**
@@ -27,13 +27,13 @@ export interface ToggleSettings extends JsonObject {
  */
 export interface CallServiceSettings extends JsonObject {
 	/** HA domain, e.g. "light" */
-	domain: string;
+	domain?: string;
 	/** HA service name, e.g. "turn_on" */
-	service: string;
+	service?: string;
 	/** JSON string containing optional service data payload. */
-	serviceData: string;
+	serviceData?: string;
 	/** Optional button label. */
-	label: string;
+	label?: string;
 }
 
 /**
@@ -41,13 +41,13 @@ export interface CallServiceSettings extends JsonObject {
  */
 export interface MonitorSettings extends JsonObject {
 	/** The entity_id to monitor, e.g. sensor.outside_temperature */
-	entityId: string;
+	entityId?: string;
 	/** How often to refresh the state (seconds). */
-	pollInterval: number;
+	pollInterval?: number;
 	/** Optional unit to append to the displayed value. */
-	unit: string;
+	unit?: string;
 	/** Show the entity's friendly name as a subtitle on the key. */
-	showName: boolean;
+	showName?: boolean;
 }
 
 /**
@@ -55,7 +55,7 @@ export interface MonitorSettings extends JsonObject {
  */
 export interface SceneSettings extends JsonObject {
 	/** Full entity_id of the scene, e.g. scene.movie_night */
-	entityId: string;
+	entityId?: string;
 	/** Optional label shown on the key. */
-	label: string;
+	label?: string;
 }

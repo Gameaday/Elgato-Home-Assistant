@@ -62,7 +62,7 @@
 			],
 			"PropertyInspectorPath": "ui/toggle.html",
 			"SupportedInMultiActions": true,
-			"UserTitleEnabled": true
+			"UserTitleEnabled": false
 		},
 		{
 			"Icon": "imgs/actions/call-service/icon",
@@ -78,7 +78,7 @@
 			],
 			"PropertyInspectorPath": "ui/call-service.html",
 			"SupportedInMultiActions": true,
-			"UserTitleEnabled": true
+			"UserTitleEnabled": false
 		},
 		{
 			"Icon": "imgs/actions/monitor/icon",
@@ -90,7 +90,6 @@
 				"Icon": "imgs/actions/monitor/encoder/icon",
 				"layout": "layouts/monitor-layout.json",
 				"TriggerDescription": {
-					"Rotate": "Browse entities",
 					"Touch": "Refresh"
 				}
 			},
@@ -119,7 +118,7 @@
 			],
 			"PropertyInspectorPath": "ui/scene.html",
 			"SupportedInMultiActions": true,
-			"UserTitleEnabled": true
+			"UserTitleEnabled": false
 		}
 	]
 }

@@ -34,7 +34,7 @@
 
 		<p class="pi-note">
 			Find available services in your Home Assistant
-			<a href="#" id="devToolsLink">Developer Tools → Services</a>.
+			<a href="#" id="devToolsLink" target="_blank" rel="noopener noreferrer">Developer Tools → Services</a>.
 		</p>
 
 		<p class="pi-note">
@@ -50,11 +50,18 @@
 			"use strict";
 
 			HAPI.initPI({
-				onSettings(settings) {
+				onSettings(settings, globalSettings) {
 					document.getElementById("domain").value      = settings.domain      ?? "";
 					document.getElementById("service").value     = settings.service     ?? "";
 					document.getElementById("serviceData").value = settings.serviceData ?? "";
 					document.getElementById("label").value       = settings.label       ?? "";
+
+					// Wire up Developer Tools link to actual HA URL
+					const devLink = document.getElementById("devToolsLink");
+					if (devLink && globalSettings?.haUrl) {
+						const baseUrl = globalSettings.haUrl.replace(/\/+$/, "");
+						devLink.href = `${baseUrl}/developer-tools/service`;
+					}
 				}
 			});
 

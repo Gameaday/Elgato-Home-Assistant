@@ -225,6 +225,12 @@
 		const sel   = document.getElementById(selectId);
 		if (!input || !sel) return;
 
+		// Keep cached selectedId in sync when user changes the dropdown
+		sel.addEventListener("change", () => {
+			const cached = _entityCache.get(selectId);
+			if (cached) cached.selectedId = sel.value;
+		});
+
 		input.addEventListener("input", () => {
 			const cached = _entityCache.get(selectId);
 			if (!cached) return;

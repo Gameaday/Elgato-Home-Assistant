@@ -36,6 +36,9 @@ export class ToggleEntity extends SingletonAction<ToggleSettings> {
 	/** Map from action id → { entityId, callback } for clean WS unsubscription. */
 	private readonly wsSubscriptions = new Map<string, { entityId: string; callback: StateChangedCallback }>();
 
+	/** Cached brightness (0–255) per action id, updated from WS events and REST syncs. */
+	private readonly cachedBrightness = new Map<string, number>();
+
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
 	override async onWillAppear(ev: WillAppearEvent<ToggleSettings>): Promise<void> {
@@ -46,6 +49,7 @@ export class ToggleEntity extends SingletonAction<ToggleSettings> {
 
 	override onWillDisappear(ev: WillDisappearEvent<ToggleSettings>): void {
 		this.removeWsSubscription(ev.action.id);
+		this.cachedBrightness.delete(ev.action.id);
 	}
 
 	override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<ToggleSettings>): Promise<void> {
@@ -73,7 +77,7 @@ export class ToggleEntity extends SingletonAction<ToggleSettings> {
 		await this.handleToggle(ev.action, ev.payload.settings);
 	}
 
-	/** Rotate the dial → adjust brightness (lights only). */
+	/** Rotate the dial → adjust brightness (lights only), using cached value to avoid REST bursts. */
 	override async onDialRotate(ev: DialRotateEvent<ToggleSettings>): Promise<void> {
 		const { settings } = ev.payload;
 		if (!settings.entityId) return;
@@ -85,12 +89,13 @@ export class ToggleEntity extends SingletonAction<ToggleSettings> {
 		if (!global.haUrl || !global.haToken) return;
 
 		try {
+			const currentBrightness = this.cachedBrightness.get(ev.action.id) ?? 0;
+			const newBrightness = Math.max(0, Math.min(255, currentBrightness + (ev.payload.ticks * DIAL_BRIGHTNESS_STEP)));
+
+			// Update cache optimistically so rapid rotations feel responsive
+			this.cachedBrightness.set(ev.action.id, newBrightness);
+
 			const client = new HaClient(global);
-			const state = await client.getState(settings.entityId);
-
-			const currentBrightness = (state.attributes["brightness"] as number | undefined) ?? 0;
-			const newBrightness = currentBrightness + (ev.payload.ticks * DIAL_BRIGHTNESS_STEP);
-
 			await client.setBrightness(settings.entityId, newBrightness);
 		} catch (err) {
 			streamDeck.logger.warn(`Toggle dial rotate failed: ${err}`);
@@ -184,6 +189,10 @@ export class ToggleEntity extends SingletonAction<ToggleSettings> {
 		state: HaState
 	): Promise<void> {
 		const isOn = state.state === "on";
+
+		// Cache brightness for responsive dial rotation
+		const brightness = (state.attributes["brightness"] as number | undefined) ?? 0;
+		this.cachedBrightness.set(action.id, brightness);
 
 		if (action.isKey()) {
 			await action.setState(isOn ? 1 : 0);

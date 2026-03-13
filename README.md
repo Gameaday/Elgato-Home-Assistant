@@ -1,6 +1,6 @@
 # Home Assistant Plugin for Elgato Stream Deck
 
-A full-featured Elgato Stream Deck plugin for controlling and monitoring your [Home Assistant](https://www.home-assistant.io/) smart home, built with the official [Elgato Stream Deck SDK v2](https://github.com/elgatosf/streamdeck).
+A full-featured Elgato Stream Deck plugin for controlling and monitoring your [Home Assistant](https://www.home-assistant.io/) smart home, built with the official [Elgato Stream Deck SDK v3](https://docs.elgato.com/streamdeck/sdk/introduction/getting-started).
 
 ---
 
@@ -19,7 +19,7 @@ All actions share global connection settings (HA URL + long-lived access token) 
 
 ## Requirements
 
-- [Elgato Stream Deck software](https://www.elgato.com/downloads) 6.4 or later
+- [Elgato Stream Deck software](https://www.elgato.com/downloads) 7.0 or later
 - [Node.js](https://nodejs.org/) 20 or later (for building from source)
 - A running [Home Assistant](https://www.home-assistant.io/) instance (local or remote)
 - A [long-lived access token](https://www.home-assistant.io/docs/authentication/) from your HA profile

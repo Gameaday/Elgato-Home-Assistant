@@ -173,6 +173,7 @@ export class HaWsClient {
 	private haUrl = "";
 	private haToken = "";
 	private connected = false;
+	private authFailed = false;
 	private msgId = 1;
 	private subscriptionId: number | null = null;
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -207,6 +208,7 @@ export class HaWsClient {
 
 		this.haUrl = newUrl;
 		this.haToken = newToken;
+		this.authFailed = false; // Reset auth failure on credential change
 		this.disconnect();
 
 		if (this.haUrl && this.haToken) {
@@ -216,8 +218,8 @@ export class HaWsClient {
 
 	/**
 	 * Subscribe to state-change events for an entity.
-	 * The callback fires immediately after registering if there is no active connection
-	 * (the next state push will update the button).
+	 * The callback fires when a `state_changed` event is received for the entity.
+	 * Note: the initial state must be fetched separately via the REST API.
 	 */
 	subscribe(entityId: string, callback: StateChangedCallback): void {
 		if (!this.subscribers.has(entityId)) {
@@ -294,6 +296,7 @@ export class HaWsClient {
 
 			if (type === "auth_invalid") {
 				streamDeck.logger.error("[HaWsClient] Authentication failed – check your HA token.");
+				this.authFailed = true;
 				this.ws?.close();
 				return;
 			}
@@ -333,6 +336,10 @@ export class HaWsClient {
 
 	private scheduleReconnect(): void {
 		if (!this.haUrl || !this.haToken) return;
+		if (this.authFailed) {
+			streamDeck.logger.warn("[HaWsClient] Not reconnecting – authentication previously failed. Reconfigure credentials to retry.");
+			return;
+		}
 		if (this.reconnectTimer) return;
 		streamDeck.logger.info(`[HaWsClient] Reconnecting in ${WS_RECONNECT_DELAY_MS / 1000}s…`);
 		this.reconnectTimer = setTimeout(() => {

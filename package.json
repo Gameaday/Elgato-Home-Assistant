@@ -5,8 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "rollup --config",
-		"watch": "rollup --config --watch",
-		"lint": "eslint src --ext .ts"
+		"watch": "rollup --config --watch"
 	},
 	"engines": {
 		"node": ">=20.5.1"
