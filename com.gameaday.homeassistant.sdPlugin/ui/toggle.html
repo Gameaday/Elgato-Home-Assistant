@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Toggle Entity</title>
+	<link rel="stylesheet" href="pi.css" />
+</head>
+<body>
+	<div class="pi-wrapper">
+
+		<div class="pi-heading">Toggle Entity</div>
+
+		<div class="pi-row">
+			<label for="entityId">Entity</label>
+			<select id="entityId">
+				<option value="">— Select entity —</option>
+			</select>
+		</div>
+
+		<div class="pi-heading">Button Labels (optional)</div>
+
+		<div class="pi-row-inline">
+			<div class="pi-row">
+				<label for="labelOn">Label when On</label>
+				<input id="labelOn" type="text" placeholder="e.g. On" maxlength="32" />
+			</div>
+			<div class="pi-row">
+				<label for="labelOff">Label when Off</label>
+				<input id="labelOff" type="text" placeholder="e.g. Off" maxlength="32" />
+			</div>
+		</div>
+
+		<p class="pi-note">Leave labels blank to show the raw entity state.</p>
+
+		<p class="pi-note">
+			Configure your Home Assistant URL and token in the
+			<strong>global plugin settings</strong> (plugin icon → right-click → Plugin Settings).
+		</p>
+
+	</div>
+
+	<script src="pi-utils.js"></script>
+	<script>
+		(function () {
+			"use strict";
+
+			const ENTITY_DOMAINS = [
+				"light", "switch", "input_boolean", "fan", "cover",
+				"climate", "media_player", "lock", "vacuum", "script",
+				"automation", "group", "binary_sensor"
+			];
+
+			HAPI.initPI({
+				onSettings(settings, globalSettings) {
+					// Populate entity dropdown
+					HAPI.loadEntities("entityId", ENTITY_DOMAINS, settings.entityId);
+
+					// Populate label fields
+					document.getElementById("labelOn").value  = settings.labelOn  ?? "";
+					document.getElementById("labelOff").value = settings.labelOff ?? "";
+				}
+			});
+
+			// ── Save on change ───────────────────────────────────────────────
+			document.getElementById("entityId").addEventListener("change", save);
+			document.getElementById("labelOn").addEventListener("input", save);
+			document.getElementById("labelOff").addEventListener("input", save);
+
+			function save() {
+				HAPI.saveSettings({
+					entityId: document.getElementById("entityId").value,
+					labelOn:  document.getElementById("labelOn").value.trim(),
+					labelOff: document.getElementById("labelOff").value.trim()
+				});
+			}
+		})();
+	</script>
+</body>
+</html>

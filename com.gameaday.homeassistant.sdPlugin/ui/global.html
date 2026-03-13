@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Home Assistant – Global Settings</title>
+	<style>
+		/* ── Reset & base ─────────────────────────────────────────────────── */
+		*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+		:root {
+			--ha-blue: #18bcf2;
+			--sd-bg: #2d2d2d;
+			--sd-surface: #3d3d3d;
+			--sd-border: #555;
+			--sd-text: #d8d8d8;
+			--sd-label: #9a9a9a;
+			--sd-input-bg: #1e1e1e;
+			--sd-radius: 4px;
+			--sd-spacing: 12px;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+			font-size: 9pt;
+			background: var(--sd-bg);
+			color: var(--sd-text);
+			padding: var(--sd-spacing);
+		}
+
+		.pi-wrapper { display: flex; flex-direction: column; gap: 14px; }
+
+		/* ── Section headings ─────────────────────────────────────────────── */
+		.pi-heading {
+			font-size: 8pt;
+			font-weight: 600;
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
+			color: var(--sd-label);
+			border-bottom: 1px solid var(--sd-border);
+			padding-bottom: 4px;
+		}
+
+		/* ── Form rows ────────────────────────────────────────────────────── */
+		.pi-row {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		label {
+			font-size: 8.5pt;
+			color: var(--sd-label);
+		}
+
+		input[type="text"],
+		input[type="password"],
+		input[type="number"],
+		select,
+		textarea {
+			width: 100%;
+			background: var(--sd-input-bg);
+			border: 1px solid var(--sd-border);
+			border-radius: var(--sd-radius);
+			color: var(--sd-text);
+			font-size: 9pt;
+			padding: 5px 8px;
+			outline: none;
+		}
+
+		input[type="text"]:focus,
+		input[type="password"]:focus,
+		input[type="number"]:focus,
+		select:focus,
+		textarea:focus {
+			border-color: var(--ha-blue);
+		}
+
+		textarea { resize: vertical; min-height: 60px; font-family: monospace; }
+
+		/* ── Checkbox row ─────────────────────────────────────────────────── */
+		.pi-check {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.pi-check input[type="checkbox"] { accent-color: var(--ha-blue); }
+
+		/* ── Status indicator ─────────────────────────────────────────────── */
+		.pi-status {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 8.5pt;
+			padding: 6px 8px;
+			border-radius: var(--sd-radius);
+			background: var(--sd-surface);
+			min-height: 28px;
+		}
+
+		.pi-status .dot {
+			width: 8px; height: 8px;
+			border-radius: 50%;
+			background: #888;
+			flex-shrink: 0;
+		}
+
+		.pi-status.ok    .dot { background: #4caf50; }
+		.pi-status.error .dot { background: #f44336; }
+		.pi-status.checking .dot {
+			background: var(--ha-blue);
+			animation: pulse 1s infinite;
+		}
+
+		@keyframes pulse {
+			0%, 100% { opacity: 1; }
+			50%       { opacity: 0.3; }
+		}
+
+		/* ── Test button ──────────────────────────────────────────────────── */
+		button {
+			background: var(--ha-blue);
+			border: none;
+			border-radius: var(--sd-radius);
+			color: #fff;
+			cursor: pointer;
+			font-size: 8.5pt;
+			font-weight: 600;
+			padding: 5px 12px;
+			transition: opacity 0.15s;
+		}
+
+		button:hover  { opacity: 0.85; }
+		button:active { opacity: 0.7; }
+		button:disabled { opacity: 0.4; cursor: default; }
+
+		.pi-row-inline {
+			display: flex;
+			gap: 8px;
+			align-items: flex-end;
+		}
+
+		.pi-row-inline .pi-row { flex: 1; }
+
+		/* ── Note / hint text ─────────────────────────────────────────────── */
+		.pi-note {
+			font-size: 8pt;
+			color: var(--sd-label);
+			line-height: 1.4;
+		}
+
+		a { color: var(--ha-blue); text-decoration: none; }
+		a:hover { text-decoration: underline; }
+	</style>
+</head>
+<body>
+	<div class="pi-wrapper">
+
+		<!-- Connection settings -->
+		<div class="pi-heading">Home Assistant Connection</div>
+
+		<div class="pi-row">
+			<label for="haUrl">Instance URL</label>
+			<input id="haUrl" type="text" placeholder="http://homeassistant.local:8123" />
+		</div>
+
+		<div class="pi-row">
+			<label for="haToken">Long-Lived Access Token</label>
+			<input id="haToken" type="password" placeholder="Paste your token here" />
+		</div>
+
+		<p class="pi-note">
+			Generate a token under <strong>Profile → Security</strong> in your Home Assistant UI.
+			<a href="https://www.home-assistant.io/docs/authentication/" target="_blank">Learn more ↗</a>
+		</p>
+
+		<div class="pi-row-inline">
+			<button id="btnTest">Test Connection</button>
+			<div id="status" class="pi-status" style="flex:1">
+				<span class="dot"></span>
+				<span id="statusText">Not tested</span>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- Stream Deck Property Inspector bridge -->
+	<script>
+		/* global ELGSDPropertyInspector */
+		(function () {
+			"use strict";
+
+			let haUrl = "";
+			let haToken = "";
+
+			// ── Stream Deck PI connection ──────────────────────────────────
+			const connectElgatoStreamDeckSocket = (port, uuid, registerEvent, info, actionInfo) => {
+				const ws = new WebSocket(`ws://127.0.0.1:${port}`);
+
+				ws.onopen = () => {
+					send({ event: registerEvent, uuid });
+
+					// Request current global settings
+					send({ event: "getGlobalSettings", context: uuid });
+				};
+
+				ws.onmessage = (msg) => {
+					const data = JSON.parse(msg.data);
+
+					if (data.event === "didReceiveGlobalSettings") {
+						const s = data.payload.settings || {};
+						haUrl   = s.haUrl   || "";
+						haToken = s.haToken || "";
+						document.getElementById("haUrl").value   = haUrl;
+						document.getElementById("haToken").value = haToken;
+					}
+				};
+
+				// ── Helpers ────────────────────────────────────────────────
+				function send(obj) {
+					ws.send(JSON.stringify(obj));
+				}
+
+				function saveSettings() {
+					send({
+						event: "setGlobalSettings",
+						context: uuid,
+						payload: { haUrl, haToken }
+					});
+				}
+
+				// ── Input listeners ────────────────────────────────────────
+				document.getElementById("haUrl").addEventListener("input", (e) => {
+					haUrl = e.target.value.trim();
+					saveSettings();
+					resetStatus();
+				});
+
+				document.getElementById("haToken").addEventListener("input", (e) => {
+					haToken = e.target.value.trim();
+					saveSettings();
+					resetStatus();
+				});
+
+				// ── Test connection ────────────────────────────────────────
+				document.getElementById("btnTest").addEventListener("click", async () => {
+					if (!haUrl || !haToken) {
+						setStatus("error", "URL and token are required.");
+						return;
+					}
+
+					setStatus("checking", "Checking…");
+					document.getElementById("btnTest").disabled = true;
+
+					try {
+						const baseUrl = haUrl.replace(/\/+$/, "");
+						const res = await fetch(`${baseUrl}/api/`, {
+							headers: {
+								"Authorization": `Bearer ${haToken}`,
+								"Content-Type": "application/json"
+							}
+						});
+
+						if (res.ok) {
+							const json = await res.json();
+							setStatus("ok", `Connected · HA ${json.version || ""}`);
+						} else {
+							setStatus("error", `HTTP ${res.status} – check URL/token.`);
+						}
+					} catch (err) {
+						setStatus("error", "Cannot reach Home Assistant.");
+					} finally {
+						document.getElementById("btnTest").disabled = false;
+					}
+				});
+
+				// ── Status helpers ─────────────────────────────────────────
+				function setStatus(state, text) {
+					const el = document.getElementById("status");
+					el.className = `pi-status ${state}`;
+					document.getElementById("statusText").textContent = text;
+				}
+
+				function resetStatus() {
+					setStatus("", "Not tested");
+				}
+			};
+
+			window.connectElgatoStreamDeckSocket = connectElgatoStreamDeckSocket;
+		})();
+	</script>
+</body>
+</html>

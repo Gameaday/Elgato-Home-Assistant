@@ -1,0 +1,27 @@
+{
+	"name": "com.gameaday.homeassistant",
+	"version": "1.0.0",
+	"description": "Home Assistant integration for Elgato Stream Deck – control and monitor any entity, call services, and activate scenes.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup --config",
+		"watch": "rollup --config --watch",
+		"lint": "eslint src --ext .ts"
+	},
+	"engines": {
+		"node": ">=20.5.1"
+	},
+	"dependencies": {
+		"@elgato/streamdeck": "2.0.2"
+	},
+	"devDependencies": {
+		"@rollup/plugin-commonjs": "^25.0.7",
+		"@rollup/plugin-node-resolve": "^15.2.3",
+		"@rollup/plugin-typescript": "^11.1.6",
+		"@tsconfig/node20": "^20.1.4",
+		"@types/node": "^20.11.0",
+		"rollup": "^4.9.0",
+		"tslib": "^2.6.2",
+		"typescript": "^5.3.3"
+	}
+}

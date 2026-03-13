@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <linearGradient id="star" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffcc00"/>
+      <stop offset="100%" style="stop-color:#ff9900"/>
+    </linearGradient>
+  </defs>
+  <rect width="144" height="144" rx="16" fill="url(#bg)"/>
+  <!-- Star / scene icon -->
+  <polygon points="72,26 80,55 110,55 86,72 95,101 72,83 49,101 58,72 34,55 64,55"
+           fill="url(#star)" opacity="0.9"/>
+  <text x="72" y="122" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#ffcc00" text-anchor="middle">SCENE</text>
+</svg>

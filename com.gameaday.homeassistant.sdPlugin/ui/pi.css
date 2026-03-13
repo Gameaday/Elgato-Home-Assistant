@@ -1,0 +1,139 @@
+/* ── Reset & base ────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+	--ha-blue: #18bcf2;
+	--ha-green: #4caf50;
+	--ha-red: #f44336;
+	--sd-bg: #2d2d2d;
+	--sd-surface: #3d3d3d;
+	--sd-border: #555;
+	--sd-text: #d8d8d8;
+	--sd-label: #9a9a9a;
+	--sd-input-bg: #1e1e1e;
+	--sd-radius: 4px;
+	--sd-spacing: 12px;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font-size: 9pt;
+	background: var(--sd-bg);
+	color: var(--sd-text);
+	padding: var(--sd-spacing);
+}
+
+.pi-wrapper { display: flex; flex-direction: column; gap: 14px; }
+
+/* ── Section headings ─────────────────────────────────────────────────────── */
+.pi-heading {
+	font-size: 8pt;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--sd-label);
+	border-bottom: 1px solid var(--sd-border);
+	padding-bottom: 4px;
+}
+
+/* ── Form rows ────────────────────────────────────────────────────────────── */
+.pi-row { display: flex; flex-direction: column; gap: 4px; }
+
+label { font-size: 8.5pt; color: var(--sd-label); }
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+	width: 100%;
+	background: var(--sd-input-bg);
+	border: 1px solid var(--sd-border);
+	border-radius: var(--sd-radius);
+	color: var(--sd-text);
+	font-size: 9pt;
+	padding: 5px 8px;
+	outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+	border-color: var(--ha-blue);
+}
+
+select option { background: var(--sd-surface); }
+
+textarea {
+	resize: vertical;
+	min-height: 70px;
+	font-family: "Courier New", Courier, monospace;
+	font-size: 8.5pt;
+}
+
+/* ── Inline row (label + short input side by side) ───────────────────────── */
+.pi-row-inline { display: flex; gap: 8px; align-items: flex-end; }
+.pi-row-inline .pi-row { flex: 1; }
+
+/* ── Checkbox row ─────────────────────────────────────────────────────────── */
+.pi-check { display: flex; align-items: center; gap: 8px; }
+.pi-check input[type="checkbox"] { accent-color: var(--ha-blue); }
+.pi-check label { color: var(--sd-text); }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+button {
+	background: var(--ha-blue);
+	border: none;
+	border-radius: var(--sd-radius);
+	color: #fff;
+	cursor: pointer;
+	font-size: 8.5pt;
+	font-weight: 600;
+	padding: 5px 12px;
+	transition: opacity 0.15s;
+	white-space: nowrap;
+}
+button:hover  { opacity: 0.85; }
+button:active { opacity: 0.7; }
+button:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Status / feedback strip ──────────────────────────────────────────────── */
+.pi-status {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 8.5pt;
+	padding: 6px 8px;
+	border-radius: var(--sd-radius);
+	background: var(--sd-surface);
+	min-height: 28px;
+}
+
+.pi-status .dot {
+	width: 8px; height: 8px;
+	border-radius: 50%;
+	background: #888;
+	flex-shrink: 0;
+}
+
+.pi-status.ok    .dot { background: var(--ha-green); }
+.pi-status.error .dot { background: var(--ha-red); }
+.pi-status.checking .dot {
+	background: var(--ha-blue);
+	animation: blink 1s infinite;
+}
+
+@keyframes blink {
+	0%, 100% { opacity: 1; }
+	50%       { opacity: 0.25; }
+}
+
+/* ── Hint / note text ─────────────────────────────────────────────────────── */
+.pi-note {
+	font-size: 8pt;
+	color: var(--sd-label);
+	line-height: 1.45;
+}
+
+/* ── Loading spinner inside select ───────────────────────────────────────── */
+select.loading { opacity: 0.5; pointer-events: none; }
+
+a { color: var(--ha-blue); text-decoration: none; }
+a:hover { text-decoration: underline; }

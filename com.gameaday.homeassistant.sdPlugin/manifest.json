@@ -1,0 +1,99 @@
+{
+	"Author": "Gameaday",
+	"Category": "Home Assistant",
+	"CategoryIcon": "imgs/plugin/category",
+	"CodePath": "bin/plugin.js",
+	"Description": "Control and monitor your Home Assistant smart home directly from your Stream Deck. Toggle entities, call services, activate scenes, and display live entity states.",
+	"Icon": "imgs/plugin/icon",
+	"Name": "Home Assistant",
+	"Nodejs": {
+		"Version": "20",
+		"Debug": "enabled"
+	},
+	"SDKVersion": 2,
+	"Software": {
+		"MinimumVersion": "6.4"
+	},
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "10.15"
+		},
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"UUID": "com.gameaday.homeassistant",
+	"Version": "1.0.0",
+	"Actions": [
+		{
+			"Icon": "imgs/actions/toggle/icon",
+			"Name": "Toggle Entity",
+			"UUID": "com.gameaday.homeassistant.toggle",
+			"Tooltip": "Toggle any Home Assistant entity (light, switch, input_boolean, etc.) on or off.",
+			"Controllers": ["Keypad"],
+			"States": [
+				{
+					"Image": "imgs/actions/toggle/off",
+					"Name": "Off"
+				},
+				{
+					"Image": "imgs/actions/toggle/on",
+					"Name": "On"
+				}
+			],
+			"PropertyInspectorPath": "ui/toggle.html",
+			"SupportedInMultiActions": true,
+			"DisableCaching": false
+		},
+		{
+			"Icon": "imgs/actions/call-service/icon",
+			"Name": "Call Service",
+			"UUID": "com.gameaday.homeassistant.call-service",
+			"Tooltip": "Call any Home Assistant service with optional service data payload.",
+			"Controllers": ["Keypad"],
+			"States": [
+				{
+					"Image": "imgs/actions/call-service/icon",
+					"Name": "Default"
+				}
+			],
+			"PropertyInspectorPath": "ui/call-service.html",
+			"SupportedInMultiActions": true,
+			"DisableCaching": false
+		},
+		{
+			"Icon": "imgs/actions/monitor/icon",
+			"Name": "Monitor State",
+			"UUID": "com.gameaday.homeassistant.monitor",
+			"Tooltip": "Display the live state of any Home Assistant entity on a Stream Deck key.",
+			"Controllers": ["Keypad"],
+			"States": [
+				{
+					"Image": "imgs/actions/monitor/icon",
+					"Name": "Default"
+				}
+			],
+			"PropertyInspectorPath": "ui/monitor.html",
+			"SupportedInMultiActions": false,
+			"DisableCaching": true
+		},
+		{
+			"Icon": "imgs/actions/scene/icon",
+			"Name": "Activate Scene",
+			"UUID": "com.gameaday.homeassistant.scene",
+			"Tooltip": "Activate a Home Assistant scene instantly from your Stream Deck.",
+			"Controllers": ["Keypad"],
+			"States": [
+				{
+					"Image": "imgs/actions/scene/icon",
+					"Name": "Default"
+				}
+			],
+			"PropertyInspectorPath": "ui/scene.html",
+			"SupportedInMultiActions": true,
+			"DisableCaching": false
+		}
+	]
+}

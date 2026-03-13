@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Activate Scene</title>
+	<link rel="stylesheet" href="pi.css" />
+</head>
+<body>
+	<div class="pi-wrapper">
+
+		<div class="pi-heading">Activate Scene</div>
+
+		<div class="pi-row">
+			<label for="entityId">Scene</label>
+			<select id="entityId">
+				<option value="">— Select scene —</option>
+			</select>
+		</div>
+
+		<div class="pi-row">
+			<label for="label">Button Label (optional)</label>
+			<input id="label" type="text" placeholder="Defaults to scene name" maxlength="32" />
+		</div>
+
+		<p class="pi-note">
+			Create and manage scenes in your Home Assistant UI under
+			<strong>Configuration → Scenes</strong>.
+		</p>
+
+		<p class="pi-note">
+			Configure your Home Assistant URL and token in the
+			<strong>global plugin settings</strong>.
+		</p>
+
+	</div>
+
+	<script src="pi-utils.js"></script>
+	<script>
+		(function () {
+			"use strict";
+
+			HAPI.initPI({
+				onSettings(settings) {
+					HAPI.loadEntities("entityId", ["scene"], settings.entityId);
+					document.getElementById("label").value = settings.label ?? "";
+				}
+			});
+
+			// ── Save on change ───────────────────────────────────────────────
+			document.getElementById("entityId").addEventListener("change", save);
+			document.getElementById("label").addEventListener("input", save);
+
+			function save() {
+				HAPI.saveSettings({
+					entityId: document.getElementById("entityId").value,
+					label:    document.getElementById("label").value.trim()
+				});
+			}
+		})();
+	</script>
+</body>
+</html>

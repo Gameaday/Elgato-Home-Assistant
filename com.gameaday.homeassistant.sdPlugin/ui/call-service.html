@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Call Service</title>
+	<link rel="stylesheet" href="pi.css" />
+</head>
+<body>
+	<div class="pi-wrapper">
+
+		<div class="pi-heading">Call Service</div>
+
+		<div class="pi-row-inline">
+			<div class="pi-row">
+				<label for="domain">Domain</label>
+				<input id="domain" type="text" placeholder="e.g. light" maxlength="64" />
+			</div>
+			<div class="pi-row">
+				<label for="service">Service</label>
+				<input id="service" type="text" placeholder="e.g. turn_on" maxlength="64" />
+			</div>
+		</div>
+
+		<div class="pi-row">
+			<label for="serviceData">Service Data (JSON, optional)</label>
+			<textarea id="serviceData" placeholder='{"entity_id": "light.living_room", "brightness": 128}'></textarea>
+		</div>
+
+		<div class="pi-row">
+			<label for="label">Button Label (optional)</label>
+			<input id="label" type="text" placeholder="Defaults to domain.service" maxlength="32" />
+		</div>
+
+		<p class="pi-note">
+			Find available services in your Home Assistant
+			<a href="#" id="devToolsLink">Developer Tools → Services</a>.
+		</p>
+
+		<p class="pi-note">
+			Configure your Home Assistant URL and token in the
+			<strong>global plugin settings</strong>.
+		</p>
+
+	</div>
+
+	<script src="pi-utils.js"></script>
+	<script>
+		(function () {
+			"use strict";
+
+			HAPI.initPI({
+				onSettings(settings) {
+					document.getElementById("domain").value      = settings.domain      ?? "";
+					document.getElementById("service").value     = settings.service     ?? "";
+					document.getElementById("serviceData").value = settings.serviceData ?? "";
+					document.getElementById("label").value       = settings.label       ?? "";
+				}
+			});
+
+			// ── Save on change ───────────────────────────────────────────────
+			["domain", "service", "serviceData", "label"].forEach(id => {
+				document.getElementById(id).addEventListener("input", save);
+			});
+
+			function save() {
+				const serviceData = document.getElementById("serviceData").value.trim();
+
+				// Validate JSON if provided
+				if (serviceData) {
+					try { JSON.parse(serviceData); }
+					catch {
+						document.getElementById("serviceData").style.borderColor = "var(--ha-red)";
+						return;
+					}
+				}
+
+				document.getElementById("serviceData").style.borderColor = "";
+
+				HAPI.saveSettings({
+					domain:      document.getElementById("domain").value.trim(),
+					service:     document.getElementById("service").value.trim(),
+					serviceData: serviceData,
+					label:       document.getElementById("label").value.trim()
+				});
+			}
+		})();
+	</script>
+</body>
+</html>
